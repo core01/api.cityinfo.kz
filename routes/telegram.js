@@ -8,10 +8,12 @@ const Markup = require('telegraf/markup')
 const _ = require('lodash')
 const {Op} = require('sequelize')
 
+const botan = require('botanio')(process.env.BOTAN_TOKEN);
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN)
 
 const TelegramBotChat = require('../server/models/TelegramBotChat')
 const ExchangeRate = require('../server/models/ExchangeRate')
+const CityName = require('../server/models/CityName')
 
 const flags = {
   'USD': '\u{1F1FA}\u{1F1F8}',
@@ -137,7 +139,14 @@ const getCourses = (ctx) => {
     then(async (chat) => {
       let userCityId = chat.city_id
       let field = await getFieldName(ctx.message.text)
-
+      CityName.findOne({where: {id: userCityId}}).then((city) => {
+        try {
+          botan.track(ctx.message, field + ' ' + city.name)
+        }
+        catch (err) {
+          console.log('error with botan')
+        }
+      })
       let date = new Date()
       let yesterday = Math.round(date.setDate(date.getDate() - 1) / 1000)
 
