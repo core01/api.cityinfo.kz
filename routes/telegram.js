@@ -22,6 +22,12 @@ const flags = {
   CNY: '\u{1F1E8}\u{1F1F3}'
 }
 
+const formatDate = digit => {
+  if (digit < 10) {
+    return '0' + digit
+  }
+  return digit
+}
 const checkToken = function(req, res, next) {
   if (req.params.token !== process.env.TELEGRAM_BOT_TOKEN) {
     res.status(498).json({
@@ -192,7 +198,10 @@ const getCourses = ctx => {
           let month = date.getMonth() + 1
           let hours = date.getHours()
           let year = date.getFullYear()
-          let minutes = '0' + date.getMinutes()
+          let minutes = date.getMinutes()
+          day = formatDate(day)
+          month = formatDate(month)
+          minutes = formatDate(minutes)
 
           responseCoursesText +=
             `<b>${_.unescape(value.name)}</b>\n\r` +
