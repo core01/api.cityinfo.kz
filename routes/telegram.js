@@ -194,12 +194,14 @@ const getCourses = ctx => {
           let year = date.getFullYear()
           let minutes = '0' + date.getMinutes()
 
-          responseCoursesText += `<b>${_.unescape(value.name)}</b>\n\r
-          ${ctx.message.text} = <b>${value[field]} KZT</b>\n\r
-          <b>Время обновления:</b> ${day}.${month}.${year} ${hours}:${minutes}\n\r`
+          responseCoursesText +=
+            `<b>${_.unescape(value.name)}</b>\n\r` +
+            `${ctx.message.text} = <b>${value[field]} KZT</b>\n\r` +
+            `<b>Время обновления:</b> ${day}.${month}.${year} ${hours}:${minutes}\n\r`
           if (value.phones) {
-            responseCoursesText += `<b>Телефоны:</b> ${value.phones}\n\r
-            <b>Адрес:</b> ${value.info}\n\r`
+            responseCoursesText +=
+              `<b>Телефоны:</b> ${value.phones}\n\r` +
+              `<b>Адрес:</b> ${value.info}\n\r`
           } else {
             responseCoursesText += `<b>Информация:</b> ${value.info}\n\r`
           }
