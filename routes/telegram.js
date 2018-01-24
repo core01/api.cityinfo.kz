@@ -175,7 +175,7 @@ const getCourses = ctx => {
       }
     });
     let date = new Date();
-    let yesterday = Math.round(date.setDate(date.getDate() - 1) / 1000);
+    let yesterday = Math.round(date.setHours(0,0,0,0) / 1000);
 
     ExchangeRate.findAll({
       where: {
