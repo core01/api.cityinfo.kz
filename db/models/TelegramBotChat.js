@@ -1,8 +1,9 @@
-const Sequelize = require('sequelize')
-const { ApiDB } = require('../db')
+const Sequelize = require('sequelize');
+const { ApiDB } = require('../../db');
+const TelegramBotRequest = require('./TelegramBotRequest');
 
 const TelegramBotChat = ApiDB.define(
-  'telegram_bot_chats',
+  'TelegramBotChat',
   {
     id: {
       type: Sequelize.INTEGER,
@@ -23,8 +24,13 @@ const TelegramBotChat = ApiDB.define(
     }
   },
   {
-    timestamps: false
+    tableName: 'telegram_bot_chats'
   }
-)
+);
 
-module.exports = TelegramBotChat
+TelegramBotChat.hasMany(TelegramBotRequest, {
+  foreignKey: 'chat_id',
+  targketKey: 'chat_id'
+});
+
+module.exports = TelegramBotChat;

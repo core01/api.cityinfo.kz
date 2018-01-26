@@ -1,5 +1,5 @@
-const Sequelize = require('sequelize')
-const { CityDB } = require('../db')
+const Sequelize = require('sequelize');
+const { CityDB } = require('../db');
 
 const ExchangeRate = CityDB.define(
   'new_exchange_rates',
@@ -67,6 +67,6 @@ const ExchangeRate = CityDB.define(
   {
     timestamps: false
   }
-)
+);
 
-module.exports = ExchangeRate
+module.exports = ExchangeRate;

@@ -11,9 +11,10 @@ const { Op } = require('sequelize');
 const botan = require('botanio')(process.env.BOTAN_TOKEN);
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
-const TelegramBotChat = require('../server/models/TelegramBotChat');
-const ExchangeRate = require('../server/models/ExchangeRate');
-const CityName = require('../server/models/CityName');
+const TelegramBotChat = require('../db/models/TelegramBotChat');
+const TelegramBotRequest = require('../db/models/TelegramBotRequest');
+const ExchangeRate = require('../db/models/ExchangeRate');
+const CityName = require('../db/models/CityName');
 
 const flags = {
   USD: '\u{1F1FA}\u{1F1F8}',
@@ -169,13 +170,19 @@ const getCourses = ctx => {
       }
     }).then(city => {
       try {
-        botan.track(ctx.message, field + ' ' + city.name);
+        //botan.track(ctx.message, field + ' ' + city.name);
+        TelegramBotRequest.create({
+          chat_id: ctx.chat.id,
+          request: field + ' ' + city.name,
+          user_id: ctx.user.id,
+          data: ctx.message
+        });
       } catch (err) {
-        console.log('error with botan');
+        console.log('error with saving request');
       }
     });
     let date = new Date();
-    let yesterday = Math.round(date.setHours(0,0,0,0) / 1000);
+    let yesterday = Math.round(date.setHours(0, 0, 0, 0) / 1000);
 
     ExchangeRate.findAll({
       where: {

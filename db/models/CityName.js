@@ -1,5 +1,5 @@
-const Sequelize = require('sequelize')
-const { CityDB } = require('../db')
+const Sequelize = require('sequelize');
+const { CityDB } = require('../db');
 
 const CityName = CityDB.define(
   'new_exchCityNames',
@@ -19,6 +19,6 @@ const CityName = CityDB.define(
   {
     timestamps: false
   }
-)
+);
 
-module.exports = CityName
+module.exports = CityName;

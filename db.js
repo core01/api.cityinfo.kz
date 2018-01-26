@@ -1,4 +1,4 @@
-const Sequelize = require('sequelize')
+const Sequelize = require('sequelize');
 
 const ApiDB = new Sequelize(
   process.env.DB_NAME,
@@ -9,7 +9,7 @@ const ApiDB = new Sequelize(
     dialect: 'mysql',
     operatorsAliases: false
   }
-)
+);
 const CityDB = new Sequelize(
   process.env.CITY_DB_NAME,
   process.env.CITY_DB_USER,
@@ -19,7 +19,7 @@ const CityDB = new Sequelize(
     dialect: 'mysql',
     operatorsAliases: false
   }
-)
+);
 
-module.exports.ApiDB = ApiDB
-module.exports.CityDB = CityDB
+module.exports.ApiDB = ApiDB;
+module.exports.CityDB = CityDB;
