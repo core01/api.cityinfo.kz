@@ -15,22 +15,12 @@ const TelegramBotChat = ApiDB.define(
     },
     chat_id: {
       type: Sequelize.INTEGER
-    },
-    created_at: {
-      type: Sequelize.DATE
-    },
-    updated_at: {
-      type: Sequelize.DATE
     }
   },
   {
-    tableName: 'telegram_bot_chats'
+    tableName: 'telegram_bot_chats',
+    timestamps: false
   }
 );
-
-TelegramBotChat.hasMany(TelegramBotRequest, {
-  foreignKey: 'chat_id',
-  targketKey: 'chat_id'
-});
 
 module.exports = TelegramBotChat;

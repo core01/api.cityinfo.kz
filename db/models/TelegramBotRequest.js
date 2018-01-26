@@ -17,13 +17,9 @@ const TelegramBotRequest = ApiDB.define(
     data: { type: Sequelize.TEXT }
   },
   {
-    tableName: 'telegram_bot_requests'
+    tableName: 'telegram_bot_requests',
+    timestamps: false
   }
 );
-
-TelegramBotRequest.hasOne(TelegramBotChat, {
-  foreignKey: 'chat_id',
-  targketKey: 'chat_id'
-});
 
 module.exports = TelegramBotRequest;
