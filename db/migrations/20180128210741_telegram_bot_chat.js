@@ -1,5 +1,5 @@
 exports.up = function(knex, Promise) {
-  return knex.schema.createTable('telegram_bot_chat', function(t) {
+  return knex.schema.createTable('telegram_bot_chats', function(t) {
     t.integer('city_id').notNull();
     t
       .integer('chat_id')
@@ -10,5 +10,5 @@ exports.up = function(knex, Promise) {
 };
 
 exports.down = function(knex, Promise) {
-  return knex.schema.dropTable('telegram_bot_chat');
+  return knex.schema.dropTable('telegram_bot_chats');
 };

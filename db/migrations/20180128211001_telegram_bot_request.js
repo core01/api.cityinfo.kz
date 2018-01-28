@@ -1,5 +1,5 @@
 exports.up = function(knex, Promise) {
-  return knex.schema.createTable('telegram_bot_request', function(t) {
+  return knex.schema.createTable('telegram_bot_requests', function(t) {
     t
       .increments('id')
       .unsigned()
@@ -7,11 +7,10 @@ exports.up = function(knex, Promise) {
     t.integer('chat_id', 10).notNull();
     t.text('request', 'mediumtext').nullable();
     t.dateTime('date').notNull();
-    t.integer('user_id', 10).notNull();
-    t.text('from', 'mediumtext');
+    t.text('message', 'mediumtext');
   });
 };
 
 exports.down = function(knex, Promise) {
-  return knex.schema.dropTable('telegram_bot_request');
+  return knex.schema.dropTable('telegram_bot_requests');
 };
