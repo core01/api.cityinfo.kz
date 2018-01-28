@@ -9,8 +9,6 @@ const compression = require('compression');
 const helmet = require('helmet');
 const { bot } = require('./routes/telegram');
 
-//const index = require('./routes/index')
-//const users = require('./routes/users')
 const telegram = require('./routes/telegram');
 
 const app = express();
