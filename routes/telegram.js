@@ -10,11 +10,6 @@ const _ = require('lodash');
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
 const { ApiDB, CityDB } = require('../db');
-//const { CityDB } = require('../db');
-//const TelegramBotChat = require('../db/models/TelegramBotChat');
-//const TelegramBotRequest = require('../db/models/TelegramBotRequest');
-//const ExchangeRate = require('../db/models/ExchangeRate');
-//const CityName = require('../db/models/CityName');
 
 const flags = {
   USD: '\u{1F1FA}\u{1F1F8}',
@@ -70,8 +65,7 @@ router.post('/:token/webhook', function(req, res, next) {
   checkToken(req, res, next);
   bot.handleUpdate(req.body, res.json);
   res.status(200).json({
-    success: true,
-    message: ''
+    success: true
   });
 });
 
@@ -113,9 +107,15 @@ const attachChatToCity = (city, chatId) => {
   let cityId = cities[city];
   if (cityId !== undefined) {
     ApiDB.raw(
-      'INSERT INTO telegram_bot_chat (chat_id,city_id) values (?, ?) ON DUPLICATE KEY UPDATE city_id=?',
+      'INSERT INTO telegram_bot_chats (chat_id,city_id) values (?, ?) ON DUPLICATE KEY UPDATE city_id=?',
       [chatId, cityId, cityId]
-    );
+    )
+      .then(rows => {
+        console.log(rows);
+      })
+      .catch(error => {
+        console.log(error);
+      });
   } else {
     throw new WrongCityException('Wrong city name = {$city}');
   }
@@ -157,25 +157,35 @@ const getFieldName = text => {
   return aliases[text];
 };
 const getCourses = ctx => {
-  //$this->attachChatToCity($text, $updates->getMessage()->getChat()->getId());
   ApiDB.select('city_id')
-    .from('telegram_bot_chat')
+    .from('telegram_bot_chats')
     .where({ chat_id: ctx.chat.id })
     .then(async rows => {
-      if (rows.lenght > 0) {
+      if (rows.length > 0) {
         let userCityId = _.map(rows, 'city_id')[0];
         let field = await getFieldName(ctx.message.text);
         CityDB.select('name')
           .from('new_exchCityNames')
-          .where({ chat_id: ctx.chat.id })
-          .then(rows => {
+          .where({ id: userCityId })
+          .then(async rows => {
             return _.map(rows, 'name')[0];
           })
-          .then(name => {
+          .then(async name => {
             // сохраняем статистику по запросу
-            console.log('Записать статистику по запросу ' + name);
+            ApiDB.insert({
+              chat_id: ctx.chat.id,
+              request: field + ' ' + name,
+              date: new Date(),
+              message: JSON.stringify(ctx.message)
+            })
+              .into('telegram_bot_requests')
+              .then(result => {
+                console.log('Статистика записана');
+              })
+              .catch(error => {
+                console.log(error);
+              });
           });
-
         let date = new Date();
         date = Math.round(date.setHours(0, 0, 0, 0) / 1000);
         let where = {
@@ -193,7 +203,6 @@ const getCourses = ctx => {
               ctx.message.text +
               '</b>":\n\r';
             let responseCoursesText = '';
-            // arr Best undefined
             let arrBest = await getBestCoursesByText(ctx.message.text, rates);
             _.forEach(rates, value => {
               if (parseFloat(value[field]) === parseFloat(arrBest[field])) {
@@ -227,14 +236,17 @@ const getCourses = ctx => {
             } else {
               replyText = responseText + responseCoursesText;
             }
-            //ctx.reply('');
-            ctx.replyWithHTML(
+            ctx.reply('');
+            return ctx.replyWithHTML(
               replyText,
               Markup.inlineKeyboard([
                 Markup.urlButton('Более подробно на сайте', url)
               ]).extra()
             );
           });
+      } else {
+        ctx.reply('');
+        return ctx.reply('Пожалуйста, выберите город заного!');
       }
     });
 };
