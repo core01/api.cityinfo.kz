@@ -14,7 +14,7 @@ const { bot } = require('./routes/telegram');
 const telegram = require('./routes/telegram');
 
 const app = express();
-
+/*
 app.use(
   bot.webhookCallback(
     '/telegram/' + process.env.TELEGRAM_BOT_TOKEN + '/webhook'
@@ -26,7 +26,7 @@ bot.telegram.setWebhook(
     process.env.TELEGRAM_BOT_TOKEN +
     '/webhook'
 );
-
+*/
 // view engine setup
 //app.set('views', path.join(__dirname, 'views'))
 //app.set('view engine', 'pug')

@@ -6,15 +6,15 @@ const Telegraf = require('telegraf');
 const Extra = require('telegraf/extra');
 const Markup = require('telegraf/markup');
 const _ = require('lodash');
-const { Op } = require('sequelize');
 
-const botan = require('botanio')(process.env.BOTAN_TOKEN);
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
-const TelegramBotChat = require('../db/models/TelegramBotChat');
-const TelegramBotRequest = require('../db/models/TelegramBotRequest');
-const ExchangeRate = require('../db/models/ExchangeRate');
-const CityName = require('../db/models/CityName');
+const { ApiDB, CityDB } = require('../db');
+//const { CityDB } = require('../db');
+//const TelegramBotChat = require('../db/models/TelegramBotChat');
+//const TelegramBotRequest = require('../db/models/TelegramBotRequest');
+//const ExchangeRate = require('../db/models/ExchangeRate');
+//const CityName = require('../db/models/CityName');
 
 const flags = {
   USD: '\u{1F1FA}\u{1F1F8}',
@@ -76,13 +76,27 @@ router.post('/:token/webhook', function(req, res, next) {
 });
 
 router.get('/test', (req, res, next) => {
-  TelegramBotChat.findAll().then(projects => {
-    console.log(projects);
-  });
-  res.status(200).json({
-    success: true,
-    message: 'works'
-  });
+  let where = {
+    city_id: 4,
+    hidden: 0,
+    published: 1
+  };
+  let date = new Date();
+  date = Math.round(date.setHours(0, 0, 0, 0) / 1000);
+  CityDB.select('*')
+    .from('new_exchange_rates')
+    .where(where)
+    .andWhere('date_update', '>', date)
+    .then(rows => {
+      res.status(200).json({
+        success: true,
+        message: 'works',
+        rows: rows
+      });
+    })
+    .catch(function(error) {
+      console.error(error);
+    });
 });
 
 const attachChatToCity = (city, chatId) => {
@@ -98,22 +112,10 @@ const attachChatToCity = (city, chatId) => {
   };
   let cityId = cities[city];
   if (cityId !== undefined) {
-    TelegramBotChat.findOrCreate({
-      where: {
-        chat_id: chatId
-      },
-      defaults: {
-        city_id: cityId
-      }
-    }).spread((chat, created) => {
-      if (created === false) {
-        chat
-          .update({
-            city_id: cityId
-          })
-          .then(() => {});
-      }
-    });
+    ApiDB.raw(
+      'INSERT INTO telegram_bot_chat (chat_id,city_id) values (?, ?) ON DUPLICATE KEY UPDATE city_id=?',
+      [chatId, cityId, cityId]
+    );
   } else {
     throw new WrongCityException('Wrong city name = {$city}');
   }
@@ -156,111 +158,85 @@ const getFieldName = text => {
 };
 const getCourses = ctx => {
   //$this->attachChatToCity($text, $updates->getMessage()->getChat()->getId());
-  TelegramBotChat.findOne({
-    where: {
-      chat_id: ctx.chat.id
-    }
-  }).then(async chat => {
-    let userCityId = chat.city_id;
-    let field = await getFieldName(ctx.message.text);
-    CityName.findOne({
-      where: {
-        id: userCityId
-      }
-    }).then(city => {
-      try {
-        //botan.track(ctx.message, field + ' ' + city.name);
-        TelegramBotRequest.create({
-          chat_id: ctx.chat.id,
-          request: field + ' ' + city.name,
-          user_id: ctx.user.id,
-          data: ctx.message
-        });
-      } catch (err) {
-        console.log('error with saving request');
-      }
-    });
-    let date = new Date();
-    date = Math.round(date.setHours(0, 0, 0, 0) / 1000);
-    let where = {};
-    let initialWhere = {
-      city_id: userCityId,
-      hidden: 0,
-      published: 1
-    };
-    if (userCityId === 4 || userCityId === 5) {
-      let query = {
-        [Op.or]: {
-          date_update: {
-            [Op.gte]: date
-          },
-          day_and_night: {
-            [Op.eq]: 1
-          }
-        }
-      };
-      where = Object.assign(initialWhere, query);
-    } else {
-      let query = {
-        date_update: {
-          [Op.gte]: date
-        }
-      };
-      where = Object.assign(initialWhere, query);
-    }
-    ExchangeRate.findAll({
-      where,
-      attributes: [field, 'name', 'date_update', 'info', 'phones']
-    }).then(async rates => {
-      let responseText =
-        '<b>Выгодные курсы</b> обмена валюты, по запросу "<b>' +
-        ctx.message.text +
-        '</b>":\n\r';
-      let responseCoursesText = '';
-      // arr Best undefined
-      let arrBest = await getBestCoursesByText(ctx.message.text, rates);
-      _.forEach(rates, value => {
-        if (parseFloat(value[field]) === parseFloat(arrBest[field])) {
-          let date = new Date(value.date_update * 1000);
-          let day = date.getDate();
-          let month = date.getMonth() + 1;
-          let hours = date.getHours();
-          let year = date.getFullYear();
-          let minutes = date.getMinutes();
-          day = formatDate(day);
-          month = formatDate(month);
-          minutes = formatDate(minutes);
+  ApiDB.select('city_id')
+    .from('telegram_bot_chat')
+    .where({ chat_id: ctx.chat.id })
+    .then(async rows => {
+      if (rows.lenght > 0) {
+        let userCityId = _.map(rows, 'city_id')[0];
+        let field = await getFieldName(ctx.message.text);
+        CityDB.select('name')
+          .from('new_exchCityNames')
+          .where({ chat_id: ctx.chat.id })
+          .then(rows => {
+            return _.map(rows, 'name')[0];
+          })
+          .then(name => {
+            // сохраняем статистику по запросу
+            console.log('Записать статистику по запросу ' + name);
+          });
 
-          responseCoursesText +=
-            `<b>${_.unescape(value.name)}</b>\n\r` +
-            `${ctx.message.text} = <b>${value[field]} KZT</b>\n\r` +
-            `<b>Время обновления:</b> ${day}.${month}.${year} ${hours}:${minutes}\n\r`;
-          if (value.phones) {
-            responseCoursesText +=
-              `<b>Телефоны:</b> ${value.phones}\n\r` +
-              `<b>Адрес:</b> ${value.info}\n\r`;
-          } else {
-            responseCoursesText += `<b>Информация:</b> ${value.info}\n\r`;
-          }
-          responseCoursesText += '\n\r';
-        }
-      });
-      let url = await getCityUrlById(userCityId);
-      let replyText = '';
-      if (responseCoursesText === '') {
-        replyText = 'Нет выгодных курсов по данной валюте.';
-      } else {
-        replyText = responseText + responseCoursesText;
+        let date = new Date();
+        date = Math.round(date.setHours(0, 0, 0, 0) / 1000);
+        let where = {
+          city_id: userCityId,
+          hidden: 0,
+          published: 1
+        };
+        CityDB.select(field, 'name', 'date_update', 'info', 'phones')
+          .from('new_exchange_rates')
+          .where(where)
+          .andWhere('date_update', '>', date)
+          .then(async rates => {
+            let responseText =
+              '<b>Выгодные курсы</b> обмена валюты, по запросу "<b>' +
+              ctx.message.text +
+              '</b>":\n\r';
+            let responseCoursesText = '';
+            // arr Best undefined
+            let arrBest = await getBestCoursesByText(ctx.message.text, rates);
+            _.forEach(rates, value => {
+              if (parseFloat(value[field]) === parseFloat(arrBest[field])) {
+                let date = new Date(value.date_update * 1000);
+                let day = date.getDate();
+                let month = date.getMonth() + 1;
+                let hours = date.getHours();
+                let year = date.getFullYear();
+                let minutes = date.getMinutes();
+                day = formatDate(day);
+                month = formatDate(month);
+                minutes = formatDate(minutes);
+                responseCoursesText +=
+                  `<b>${_.unescape(value.name)}</b>\n\r` +
+                  `${ctx.message.text} = <b>${value[field]} KZT</b>\n\r` +
+                  `<b>Время обновления:</b> ${day}.${month}.${year} ${hours}:${minutes}\n\r`;
+                if (value.phones) {
+                  responseCoursesText +=
+                    `<b>Телефоны:</b> ${value.phones}\n\r` +
+                    `<b>Адрес:</b> ${value.info}\n\r`;
+                } else {
+                  responseCoursesText += `<b>Информация:</b> ${value.info}\n\r`;
+                }
+                responseCoursesText += '\n\r';
+              }
+            });
+            let url = await getCityUrlById(userCityId);
+            let replyText = '';
+            if (responseCoursesText === '') {
+              replyText = 'Нет выгодных курсов по данной валюте.';
+            } else {
+              replyText = responseText + responseCoursesText;
+            }
+            //ctx.reply('');
+            ctx.replyWithHTML(
+              replyText,
+              Markup.inlineKeyboard([
+                Markup.urlButton('Более подробно на сайте', url)
+              ]).extra()
+            );
+          });
       }
-      ctx.reply('');
-      ctx.replyWithHTML(
-        replyText,
-        Markup.inlineKeyboard([
-          Markup.urlButton('Более подробно на сайте', url)
-        ]).extra()
-      );
     });
-  });
 };
 const getCityUrlById = async city_id => {
   let cities = {
