@@ -28,7 +28,7 @@ const formatDate = digit => {
   }
   return digit;
 };
-const checkToken = function(req, res, next) {
+const checkToken = (req, res, next) => {
   if (req.params.token !== process.env.TELEGRAM_BOT_TOKEN) {
     res.status(498).json({
       success: false,
@@ -96,7 +96,6 @@ const attachChatToCity = (city, chatId) => {
     'Усть-Каменогорск Опт': 5
   };
   let cityId = cities[city];
-  console.log(cityId + ' ss  ' + city);
   if (cityId !== undefined) {
     TelegramBotChat.findOrCreate({
       where: {
@@ -175,17 +174,32 @@ const getCourses = ctx => {
       }
     });
     let date = new Date();
-    let yesterday = Math.round(date.setHours(0,0,0,0) / 1000);
-
-    ExchangeRate.findAll({
-      where: {
-        city_id: userCityId,
-        hidden: 0,
-        published: 1,
+    let where = {};
+    let initialWhere = {
+      city_id: userCityId,
+      hidden: 0,
+      published: 1
+    };
+    if(userCityId === 4 || userCityId === 5){
+      let query = {
         date_update: {
-          [Op.gte]: yesterday
+          [Op.gte]: Math.round(date.setDate(-1) / 1000)
+        },
+        day_and_night: {
+          [Op.eq]: 1
         }
-      },
+      };
+      where = Object.assign(initialWhere, query);
+    }else{
+      let query = {
+        date_update: {
+          [Op.gte]: Math.round(date.setHours(0, 0, 0, 0) / 1000)
+        }
+      };
+      where = Object.assign(initialWhere, query);
+    }
+    ExchangeRate.findAll({
+      where,
       attributes: [field, 'name', 'date_update', 'info', 'phones']
     }).then(async rates => {
       let responseText =
@@ -228,7 +242,8 @@ const getCourses = ctx => {
       } else {
         replyText = responseText + responseCoursesText;
       }
-      return ctx.replyWithHTML(
+      ctx.reply('');
+      ctx.replyWithHTML(
         replyText,
         Markup.inlineKeyboard([
           Markup.urlButton('Более подробно на сайте', url)
