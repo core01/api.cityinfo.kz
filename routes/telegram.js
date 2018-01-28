@@ -174,6 +174,7 @@ const getCourses = ctx => {
       }
     });
     let date = new Date();
+    date = Math.round(date.setHours(0, 0, 0, 0) / 1000);
     let where = {};
     let initialWhere = {
       city_id: userCityId,
@@ -182,18 +183,20 @@ const getCourses = ctx => {
     };
     if(userCityId === 4 || userCityId === 5){
       let query = {
-        date_update: {
-          [Op.gte]: Math.round(date.setDate(-1) / 1000)
-        },
-        day_and_night: {
-          [Op.eq]: 1
+        [Op.or]: {
+          date_update: {
+            [Op.gte]: date
+          },
+          day_and_night: {
+            [Op.eq]: 1
+          }
         }
       };
       where = Object.assign(initialWhere, query);
     }else{
       let query = {
         date_update: {
-          [Op.gte]: Math.round(date.setHours(0, 0, 0, 0) / 1000)
+          [Op.gte]: date
         }
       };
       where = Object.assign(initialWhere, query);
