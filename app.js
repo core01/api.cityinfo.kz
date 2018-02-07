@@ -10,20 +10,23 @@ const helmet = require('helmet');
 const { bot } = require('./routes/telegram');
 
 const telegram = require('./routes/telegram');
+const courses = require('./routes/courses');
 
 const app = express();
 
-app.use(
-  bot.webhookCallback(
-    '/telegram/' + process.env.TELEGRAM_BOT_TOKEN + '/webhook'
-  )
-);
-bot.telegram.setWebhook(
-  process.env.API_URL +
-    '/telegram/' +
-    process.env.TELEGRAM_BOT_TOKEN +
-    '/webhook'
-);
+if (process.env.NODE_ENV === 'production') {
+  app.use(
+    bot.webhookCallback(
+      '/telegram/' + process.env.TELEGRAM_BOT_TOKEN + '/webhook'
+    )
+  );
+  bot.telegram.setWebhook(
+    process.env.API_URL +
+      '/telegram/' +
+      process.env.TELEGRAM_BOT_TOKEN +
+      '/webhook'
+  );
+}
 
 // view engine setup
 //app.set('views', path.join(__dirname, 'views'))
@@ -31,6 +34,7 @@ bot.telegram.setWebhook(
 
 app.use(helmet());
 app.use('/telegram', telegram);
+app.use('/courses', courses);
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
