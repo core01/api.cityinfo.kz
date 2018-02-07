@@ -27,6 +27,22 @@ router.get('/:cityid/', function(req, res, next) {
     hidden: 0,
     published: 1
   };
+
+  let sorting = {
+    buyUSD: 'desc',
+    buyEUR: 'desc',
+    buyRUB: 'desc',
+    buyCNY: 'desc',
+    sellUSD: 'asc',
+    sellEUR: 'asc',
+    sellRUB: 'asc',
+    sellCNY: 'asc'
+  };
+  let orderBy = { field: 'id', sorting: 'desc' };
+  if (sorting[req.query.sortBy]) {
+    orderBy.field = req.query.sortBy;
+    orderBy.sorting = sorting[req.query.sortBy];
+  }
   let date = new Date();
   date = Math.round(date.setHours(0, 0, 0, 0) / 1000);
   let fields = [
@@ -49,6 +65,7 @@ router.get('/:cityid/', function(req, res, next) {
     .from('new_exchange_rates')
     .where(where)
     .andWhere('date_update', '>', date)
+    .orderBy(orderBy.field, orderBy.sorting)
     .then(rows => {
       return res.status(200).json(rows);
     })
