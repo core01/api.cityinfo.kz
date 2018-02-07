@@ -29,7 +29,7 @@ const checkToken = (req, res, next) => {
     res.status(498).json({
       success: false,
       message: 'Failed token',
-      token: req.params
+      token: req.params.token
     });
   }
   next();
@@ -67,30 +67,6 @@ router.post('/:token/webhook', function(req, res, next) {
   res.status(200).json({
     success: true
   });
-});
-
-router.get('/test', (req, res, next) => {
-  let where = {
-    city_id: 4,
-    hidden: 0,
-    published: 1
-  };
-  let date = new Date();
-  date = Math.round(date.setHours(0, 0, 0, 0) / 1000);
-  CityDB.select('*')
-    .from('new_exchange_rates')
-    .where(where)
-    .andWhere('date_update', '>', date)
-    .then(rows => {
-      res.status(200).json({
-        success: true,
-        message: 'works',
-        rows: rows
-      });
-    })
-    .catch(function(error) {
-      console.error(error);
-    });
 });
 
 const attachChatToCity = (city, chatId) => {
