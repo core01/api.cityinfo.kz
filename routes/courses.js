@@ -16,6 +16,34 @@ const checkToken = async (req, res, next) => {
   return next();
 };
 
+// Расчитывает выгодные курсы покупки/продажи
+const getBestCourses = async rates => {
+  let arrBest = {
+    buyUSD: -1,
+    buyEUR: -1,
+    buyRUB: -1,
+    buyCNY: -1,
+    sellUSD: 10000,
+    sellRUB: 10000,
+    sellEUR: 10000,
+    sellCNY: 10000
+  };
+  _.forEach(rates, function(rate) {
+    _.forEach(rate, (value, key) => {
+      if (key.substr(0, 3) === 'sel') {
+        if (value <= arrBest[key] && parseFloat(value) > 0) {
+          arrBest[key] = parseFloat(value);
+        }
+      } else if (key.substr(0, 3) === 'buy') {
+        if (value >= arrBest[key] && parseFloat(value) > 0) {
+          arrBest[key] = parseFloat(value);
+        }
+      }
+    });
+  });
+  return arrBest;
+};
+
 router.all('*', (req, res, next) => {
   res.setHeader('Access-Control-Allow-Headers', 'courses-token');
   checkToken(req, res, next);
@@ -66,8 +94,10 @@ router.get('/:cityid/', function(req, res, next) {
     .where(where)
     .andWhere('date_update', '>', date)
     .orderBy(orderBy.field, orderBy.sorting)
-    .then(rows => {
-      return res.status(200).json(rows);
+    .then(async rows => {
+      // получение выгодных курсов
+      let best = await getBestCourses(rows);
+      return res.status(200).json({ rates: rows, best: best });
     })
     .catch(function(error) {
       console.error(error);
