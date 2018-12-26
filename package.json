@@ -1,6 +1,6 @@
 {
   "name": "api.cityinfo.kz",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
@@ -19,7 +19,6 @@
     "morgan": "~1.9.1",
     "mysql2": "^1.6.4",
     "pug": "2.0.3",
-    "serve-favicon": "~2.5.0",
     "telegraf": "^3.25.5"
   },
   "devDependencies": {
