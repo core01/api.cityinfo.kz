@@ -3,14 +3,13 @@
 const express = require('express');
 const router = express.Router();
 const Telegraf = require('telegraf');
-const Extra = require('telegraf/extra');
 const Markup = require('telegraf/markup');
 const _ = require('lodash');
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
 const { ApiDB, CityDB } = require('../db');
-
+// eslint-disable-next-line
 const flags = {
   USD: '\u{1F1FA}\u{1F1F8}',
   EUR: '\u{1F1EA}\u{1F1FA}',
@@ -155,9 +154,6 @@ const getCourses = ctx => {
               message: JSON.stringify(ctx.message)
             })
               .into('telegram_bot_requests')
-              .then(result => {
-                console.log('Статистика записана');
-              })
               .catch(error => {
                 console.log(error);
               });

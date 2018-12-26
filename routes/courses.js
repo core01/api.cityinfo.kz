@@ -49,7 +49,7 @@ router.all('*', (req, res, next) => {
   checkToken(req, res, next);
 });
 
-router.get('/:cityid/', function(req, res, next) {
+router.get('/:cityid/', function(req, res) {
   let where = {
     city_id: req.params.cityid,
     hidden: 0,
