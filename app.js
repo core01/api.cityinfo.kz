@@ -1,4 +1,5 @@
 const express = require('express');
+// eslint-disable-next-line
 const dotenv = require('dotenv').config();
 const path = require('path');
 const favicon = require('serve-favicon');
@@ -31,7 +32,7 @@ if (process.env.NODE_ENV === 'production') {
 // view engine setup
 //app.set('views', path.join(__dirname, 'views'))
 //app.set('view engine', 'pug')
-
+app.use(favicon(path.join(__dirname, 'favicon.ico')));
 app.use(helmet());
 app.use('/telegram', telegram);
 app.use('/courses', courses);
@@ -52,7 +53,7 @@ app.use(function(req, res, next) {
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function(err, req, res) {
   // set locals, only providing error in development
   let response = {
     success: false,
