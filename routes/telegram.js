@@ -44,7 +44,7 @@ const WrongCityException = message => {
 
 const citySelect = ctx => {
   let keyboard = [
-    ['Астана', 'Астана Опт'],
+    ['Нур-Султан', 'Нур-Султан Опт'],
     ['Алматы', 'Алматы Опт'],
     ['Павлодар', 'Риддер'],
     ['Усть-Каменогорск', 'Усть-Каменогорск Опт']
@@ -70,12 +70,12 @@ router.post('/:token/webhook', function(req, res, next) {
 
 const attachChatToCity = (city, chatId) => {
   let cities = {
-    Астана: 3,
-    'Астана Опт': 8,
-    Алматы: 2,
+    'Нур-Султан': 3,
+    'Нур-Султан Опт': 8,
+    'Алматы': 2,
     'Алматы Опт': 7,
-    Павлодар: 1,
-    Риддер: 6,
+    'Павлодар': 1,
+    'Риддер': 6,
     'Усть-Каменогорск': 4,
     'Усть-Каменогорск Опт': 5
   };
@@ -228,7 +228,7 @@ const getCityUrlById = async city_id => {
   let cities = {
     1: 'pavlodar', //'Павлодар',
     2: 'almaty', //'Алматы',
-    3: 'astana', //'Астана',
+    3: 'astana', //'Нур-Султан',
     4: 'ust-kamenogorsk', //'Усть-Каменогорск',
     5: 'ust-kamenogorsk', //'Усть-Каменогорск Опт',
     6: 'ridder', //'Риддер',
@@ -280,8 +280,8 @@ bot.hears('Начать сначала', citySelect);
 
 bot.hears('Усть-Каменогорск', currencySelect);
 bot.hears('Усть-Каменогорск Опт', currencySelect);
-bot.hears('Астана', currencySelect);
-bot.hears('Астана Опт', currencySelect);
+bot.hears('Нур-Султан', currencySelect);
+bot.hears('Нур-Султан Опт', currencySelect);
 bot.hears('Алматы', currencySelect);
 bot.hears('Алматы Опт', currencySelect);
 bot.hears('Павлодар', currencySelect);
