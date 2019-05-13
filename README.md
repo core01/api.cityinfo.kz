@@ -1,0 +1,1 @@
+To run knex use this `knex migrate:currentVersion --knexfile ./knexfile.ts`
