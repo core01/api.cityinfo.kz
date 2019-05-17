@@ -1,21 +1,40 @@
-import express from 'express';
+import express, { NextFunction, Response } from 'express';
+import { createServer, Server } from 'http';
 import createError from 'http-errors';
 import dotenv from 'dotenv';
 import logger from 'morgan';
-import path from 'path';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import helmet from 'helmet';
+import socketIO from 'socket.io';
 
 import courses from './routes/courses';
 import telegram, { bot } from './routes/telegram';
+import { expressRequest } from './index';
 
 // initialize configuration
 dotenv.config();
 
 const app = express();
+export const server: Server = createServer(app);
+const io: socketIO.Server = socketIO(server, {
+  origins: process.env.SOCKET_CLIENT_ORIGIN,
+});
+
 app.set('port', process.env.PORT);
+
+io.on('connection', function (socket) {
+  console.log('connect');
+  socket.on('disconnect', function () {
+    console.log('disconnect');
+  });
+});
+
+app.use((req: expressRequest, res: Response, next: NextFunction) => {
+  req.io = io;
+  next();
+});
 
 app.use(
   bot.webhookCallback(
@@ -30,6 +49,11 @@ bot.telegram.setWebhook(
 );
 
 app.use(helmet());
+app.use(compression()); //Compress all routes
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(logger('dev'));
+app.use(cookieParser());
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to cityinfo.kz api' });
@@ -37,12 +61,6 @@ app.get('/', (req, res) => {
 
 app.use('/courses', courses);
 app.use('/telegram', telegram);
-
-app.use(compression()); //Compress all routes
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(logger('dev'));
-app.use(cookieParser());
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

@@ -1,11 +1,12 @@
-import express from 'express';
+import express, { Response } from 'express';
 
 const router = express.Router();
 import _ from 'lodash';
 
 import { CityDB } from '../databases';
+import { expressRequest } from '../index';
 
-const checkToken = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+/*const checkToken = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   if (req.headers['courses-token'] !== process.env.COURSES_TOKEN) {
     return res.status(498).json({
       success: false,
@@ -14,7 +15,7 @@ const checkToken = (req: express.Request, res: express.Response, next: express.N
     });
   }
   return next();
-};
+};*/
 
 interface Rate {
   [key: string]: number | string
@@ -26,6 +27,25 @@ interface BestCourses {
 
 interface Sorting {
   [key: string]: string
+}
+
+interface exchangeRate {
+  name: string,
+  buyUSD: number,
+  sellUSD: number,
+  buyEUR: number,
+  sellEUR: number,
+  buyRUB: number,
+  sellRUB: number,
+  buyCNY: number,
+  sellCNY: number,
+  buyGBP: number,
+  info: string,
+  phones: string,
+  date_update: number,
+  day_and_night: number,
+  published: number,
+  city_id: number,
 }
 
 // Расчитывает выгодные курсы покупки/продажи
@@ -60,10 +80,10 @@ const getBestCourses = async (rates: Rate[]) => {
   return arrBest;
 };
 
-router.all('*', (req, res, next) => {
-  res.setHeader('Access-Control-Allow-Headers', 'courses-token');
-  checkToken(req, res, next);
-});
+// router.all('*', (req, res, next) => {
+//   res.setHeader('Access-Control-Allow-Headers', 'courses-token');
+//   checkToken(req, res, next);
+// });
 
 router.get('/:cityid/', function (req: express.Request, res: express.Response) {
   let where = {
@@ -114,11 +134,12 @@ router.get('/:cityid/', function (req: express.Request, res: express.Response) {
   CityDB.select(fields)
     .from('new_exchange_rates')
     .where(where)
-    .andWhere('date_update', '>', unixTime)
+    .andWhere('date_update', '>=', unixTime)
     .orderBy(orderBy.field, orderBy.sorting)
     .then(async rows => {
       // получение выгодных курсов
       let best = await getBestCourses(rows);
+
       return res.status(200).json({ rates: rows, best: best });
     })
     .catch(function (error) {
@@ -128,6 +149,52 @@ router.get('/:cityid/', function (req: express.Request, res: express.Response) {
         message: 'Server error, please contact to administrator.',
       });
     });
+});
+
+router.post('/update/', function (req: expressRequest, res: Response) {
+  console.log(req.body);
+  if (req.body) {
+    let exchangeRate: exchangeRate = req.body;
+    let props = Object.keys(exchangeRate);
+    let haystack = [
+      'name',
+      'buyUSD',
+      'sellUSD',
+      'buyEUR',
+      'sellEUR',
+      'buyRUB',
+      'sellRUB',
+      'buyCNY',
+      'sellCNY',
+      'buyGBP',
+      'sellGBP',
+      'info',
+      'phones',
+      'date_update',
+      'day_and_night',
+      'published',
+      'city_id',
+    ];
+    let count = 0;
+    for (let prop of haystack) {
+      if (props.includes(prop)) {
+        count++;
+      }
+    }
+    console.log(count);
+    if (count === haystack.length) {
+      req.io.emit('update', exchangeRate);
+
+      return res.status(200).json({
+        success: true,
+      });
+    }
+  }
+
+  return res.status(422).json({
+    error: 'All parameters are required',
+  });
+
 });
 
 export default router;
