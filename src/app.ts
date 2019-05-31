@@ -1,5 +1,6 @@
 import express, { NextFunction, Response } from 'express';
 import { createServer, Server } from 'http';
+import cors from 'cors';
 import createError from 'http-errors';
 import dotenv from 'dotenv';
 import logger from 'morgan';
@@ -17,15 +18,21 @@ import { expressRequest } from './index';
 dotenv.config();
 
 const app = express();
+// Enable All CORS Requests
+app.use(cors());
 export const server: Server = createServer(app);
 const io: socketIO.Server = socketIO(server, {
   origins: process.env.SOCKET_CLIENT_ORIGIN,
+  path: '/ws'
 });
 
 app.set('port', process.env.PORT);
 
 io.on('connection', function (socket) {
-  console.log('connect');
+  socket.on('join',(room) => {
+     socket.join(room);
+  });
+
   socket.on('disconnect', function () {
     console.log('disconnect');
   });
@@ -63,8 +70,8 @@ app.use('/courses', courses);
 app.use('/telegram', telegram);
 
 // catch 404 and forward to error handler
-app.use(function (req, res, next) {
-  next(createError(404));
+app.use(function (req, res) {
+  return res.status(404).json(createError(404));
 });
 
 // error handler
@@ -74,8 +81,7 @@ app.use(function (err: any, req: express.Request, res: express.Response) {
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
   // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+  res.status(err.status || 500).json(err);
 });
 
 export default app;

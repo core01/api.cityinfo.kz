@@ -1,21 +1,23 @@
 import express, { Response } from 'express';
+import _ from 'lodash';
 
 const router = express.Router();
-import _ from 'lodash';
 
 import { CityDB } from '../databases';
 import { expressRequest } from '../index';
 
-/*const checkToken = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  if (req.headers['courses-token'] !== process.env.COURSES_TOKEN) {
+const checkToken = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const token = req.headers['courses-token'];
+  if (token !== process.env.COURSES_TOKEN) {
+
     return res.status(498).json({
       success: false,
       message: 'Failed token',
-      token: req.headers['courses-token'],
+      token: token ? token : null,
     });
   }
   return next();
-};*/
+};
 
 interface Rate {
   [key: string]: number | string
@@ -30,6 +32,7 @@ interface Sorting {
 }
 
 interface exchangeRate {
+  id: number,
   name: string,
   buyUSD: number,
   sellUSD: number,
@@ -41,11 +44,13 @@ interface exchangeRate {
   sellCNY: number,
   buyGBP: number,
   info: string,
-  phones: string,
+  phones: string | string[],
   date_update: number,
   day_and_night: number,
   published: number,
   city_id: number,
+
+  [key: string]: number | string | string[],
 }
 
 // Расчитывает выгодные курсы покупки/продажи
@@ -63,27 +68,28 @@ const getBestCourses = async (rates: Rate[]) => {
     sellCNY: 10000,
     sellGBP: 10000,
   };
-  _.forEach(rates, function (rate) {
-    _.forEach(rate, (value, key) => {
-      let rateValue = parseFloat(value as string);
+  for (let rate of rates) {
+    for (let key in rate) {
+      let rateValue = parseFloat(rate[key] as string);
       if (key.substr(0, 3) === 'sel') {
         if (rateValue <= arrBest[key] && rateValue > 0) {
           arrBest[key] = rateValue;
         }
       } else if (key.substr(0, 3) === 'buy') {
-        if (value >= arrBest[key] && rateValue > 0) {
+        if (rateValue >= arrBest[key] && rateValue > 0) {
           arrBest[key] = rateValue;
         }
       }
-    });
-  });
+    }
+  }
+
   return arrBest;
 };
 
-// router.all('*', (req, res, next) => {
-//   res.setHeader('Access-Control-Allow-Headers', 'courses-token');
-//   checkToken(req, res, next);
-// });
+router.post('*', (req, res, next) => {
+  res.setHeader('Access-Control-Allow-Headers', 'courses-token');
+  checkToken(req, res, next);
+});
 
 router.get('/:cityid/', function (req: express.Request, res: express.Response) {
   let where = {
@@ -114,6 +120,7 @@ router.get('/:cityid/', function (req: express.Request, res: express.Response) {
   let unixTime = Math.round((date.valueOf() / 1000));
 
   let fields = [
+    'id',
     'name',
     'buyUSD',
     'sellUSD',
@@ -139,8 +146,16 @@ router.get('/:cityid/', function (req: express.Request, res: express.Response) {
     .then(async rows => {
       // получение выгодных курсов
       let best = await getBestCourses(rows);
+      const rates = rows.map((rate:exchangeRate) => {
+        rate.name = _.unescape(rate.name);
+        if(rate.phones){
+          rate.phones = (rate.phones as string).split(',').map(phone => phone.trim());
+        }
 
-      return res.status(200).json({ rates: rows, best: best });
+        return rate;
+      });
+
+      return res.status(200).json({ rates: rates, best: best });
     })
     .catch(function (error) {
       console.error(error);
@@ -152,7 +167,6 @@ router.get('/:cityid/', function (req: express.Request, res: express.Response) {
 });
 
 router.post('/update/', function (req: expressRequest, res: Response) {
-  console.log(req.body);
   if (req.body) {
     let exchangeRate: exchangeRate = req.body;
     let props = Object.keys(exchangeRate);
@@ -177,13 +191,13 @@ router.post('/update/', function (req: expressRequest, res: Response) {
     ];
     let count = 0;
     for (let prop of haystack) {
-      if (props.includes(prop)) {
+      if (props.includes(prop) && prop.length > 0) {
         count++;
       }
     }
-    console.log(count);
+
     if (count === haystack.length) {
-      req.io.emit('update', exchangeRate);
+      req.io.to(`${exchangeRate['city_id']}`).emit('update', exchangeRate);
 
       return res.status(200).json({
         success: true,
