@@ -229,6 +229,7 @@ const getCourses = async (ctx: ContextMessageUpdate) => {
           responseCoursesText += `<b>Информация:</b> ${value.info}\n\r`;
         }
         responseCoursesText += '\n\r';
+        responseCoursesText += '<b>(ВЫГОДНЫЕ КУРСЫ СВЕРХУ)</b>:\n\r';
       });
       let url = await getCityUrlById(userCityId);
       let replyText = '';

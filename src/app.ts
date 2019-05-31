@@ -17,16 +17,17 @@ dotenv.config();
 const app = express();
 app.set('port', process.env.PORT);
 
-app.use(
-  bot.webhookCallback(
-    '/telegram/' + process.env.TELEGRAM_BOT_TOKEN + '/webhook',
-  ),
-);
 bot.telegram.setWebhook(
   process.env.API_URL +
   '/telegram/' +
   process.env.TELEGRAM_BOT_TOKEN +
   '/webhook',
+);
+
+app.use(
+  bot.webhookCallback(
+    '/telegram/' + process.env.TELEGRAM_BOT_TOKEN + '/webhook',
+  ),
 );
 
 app.use(helmet());
