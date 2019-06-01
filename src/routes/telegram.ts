@@ -229,14 +229,13 @@ const getCourses = async (ctx: ContextMessageUpdate) => {
           responseCoursesText += `<b>Информация:</b> ${value.info}\n\r`;
         }
         responseCoursesText += '\n\r';
-        responseCoursesText += '<b>(ВЫГОДНЫЕ КУРСЫ СВЕРХУ)</b>:\n\r';
       });
       let url = await getCityUrlById(userCityId);
       let replyText = '';
       if (responseCoursesText === '') {
         replyText = 'Нет выгодных курсов по данной валюте.';
       } else {
-        replyText = responseText + responseCoursesText;
+        replyText = responseText + responseCoursesText + '<b>(ВЫГОДНЫЕ КУРСЫ СВЕРХУ)</b>\n\r';
       }
 
       ctx.reply('');
