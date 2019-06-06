@@ -137,6 +137,9 @@ router.get('/:cityid/', function (req: express.Request, res: express.Response) {
     'date_update',
     'day_and_night',
     'published',
+    'longitude',
+    'latitude',
+    'company_id',
   ];
   CityDB.select(fields)
     .from('new_exchange_rates')
