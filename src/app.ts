@@ -59,6 +59,12 @@ bot.telegram.setWebhook(
   '/webhook',
 );
 
+app.use(
+  bot.webhookCallback(
+    '/telegram/' + process.env.TELEGRAM_BOT_TOKEN + '/webhook',
+  ),
+);
+
 app.use(helmet());
 app.use(compression()); //Compress all routes
 app.use(bodyParser.json());

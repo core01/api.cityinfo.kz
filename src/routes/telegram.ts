@@ -235,7 +235,7 @@ const getCourses = async (ctx: ContextMessageUpdate) => {
       if (responseCoursesText === '') {
         replyText = 'Нет выгодных курсов по данной валюте.';
       } else {
-        replyText = responseText + responseCoursesText;
+        replyText = responseText + responseCoursesText + '<b>(ВЫГОДНЫЕ КУРСЫ СВЕРХУ)</b>\n\r';
       }
 
       ctx.reply('');
