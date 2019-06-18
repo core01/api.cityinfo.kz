@@ -179,6 +179,7 @@ router.post('/update/', function(req: expressRequest, res: Response) {
     let exchangeRate: exchangeRate = req.body;
     let props = Object.keys(exchangeRate);
     let haystack = [
+      'id',
       'name',
       'buyUSD',
       'sellUSD',
@@ -209,6 +210,11 @@ router.post('/update/', function(req: expressRequest, res: Response) {
     }
 
     if (missingFields.length === 0) {
+      if (exchangeRate['phones']) {
+        exchangeRate['phones'] = (exchangeRate['phones'] as string)
+          .split(',')
+          .map(phone => phone.trim());
+      }
       req.io.to(`${exchangeRate['city_id']}`).emit('update', exchangeRate);
 
       return res.status(200).json({
