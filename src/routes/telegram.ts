@@ -204,7 +204,7 @@ const getCourses = async (ctx: ContextMessageUpdate) => {
     .andWhere('date_update', '>=', unixTime)
     .andWhere(field, '>=', 1)
     .orderBy(field, order)
-    .limit(15)
+    .limit(12) // If limit is >= 15 than number highlighting not works
     .then(async rates => {
 
       let responseText =
