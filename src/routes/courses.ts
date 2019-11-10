@@ -94,23 +94,17 @@ router.post('*', (req, res, next) => {
 });
 
 router.get('/:cityid/', function(req: express.Request, res: express.Response) {
-  const gross: boolean = req.query.gross === 'true';
   let where: {
     city_id: number;
     hidden: number;
     published: number;
     deleted: number;
-    gross?: number;
   } = {
     city_id: req.params.cityid,
     hidden: 0,
     published: 1,
     deleted: 0,
   };
-
-  if (gross) {
-    where.gross = 1;
-  }
 
   let sorting: Sorting = {
     buyUSD: 'desc',
@@ -187,7 +181,7 @@ router.get('/:cityid/', function(req: express.Request, res: express.Response) {
 });
 
 router.post('/update/', function(req: expressRequest, res: Response) {
-  let missingFields = [];
+  let missingFields: string[] = [];
   if (req.body) {
     let exchangeRate: exchangeRate = req.body;
     let props = Object.keys(exchangeRate);
@@ -213,6 +207,7 @@ router.post('/update/', function(req: expressRequest, res: Response) {
       'latitude',
       'company_id',
       'city_id',
+      'gross',
     ];
 
     for (let prop of haystack) {
@@ -237,13 +232,13 @@ router.post('/update/', function(req: expressRequest, res: Response) {
   }
   let response: {
     error: string;
-    missingFileds?: string[];
+    missingFields?: string[];
   } = {
     error: 'All parameters are required',
   };
 
   if (missingFields.length > 0) {
-    response.missingFileds = missingFields;
+    response.missingFields = missingFields;
   }
 
   return res.status(422).json(response);
