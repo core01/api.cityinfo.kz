@@ -65,22 +65,50 @@ router.post('/:token/webhook', function (req: Request, res: Response, next: Next
   });
 });
 
-const attachChatToCity = (city: string, chatId: number) => {
-  let cities: { [key: string]: number | string } = {
-    'Нур-Султан': 3,
-    'Нур-Султан Опт': 8,
-    'Алматы': 2,
-    'Алматы Опт': 7,
-    'Павлодар': 1,
-    'Риддер': 6,
-    'Усть-Каменогорск': 4,
-    'Усть-Каменогорск Опт': 5,
+const attachChatToCity = (cityName: string, chatId: number) => {
+  interface chatToCity {
+    id: number;
+    gross: number;
+  }
+  let cities: { [key: string]:  chatToCity} = {
+    'Нур-Султан': {
+      id: 3,
+      gross: 0,
+    },
+    'Нур-Султан Опт': {
+      id: 3,
+      gross: 1,
+    },
+    'Алматы': {
+      id: 2,
+      gross: 0,
+    },
+    'Алматы Опт': {
+      id: 2,
+      gross: 1,
+    },
+    'Павлодар': {
+      id: 1,
+      gross: 0,
+    },
+    'Риддер': {
+      id: 6,
+      gross: 0,
+    },
+    'Усть-Каменогорск': {
+      id:4,
+      gross: 0,
+    },
+    'Усть-Каменогорск Опт': {
+      id: 4,
+      gross: 1,
+    },
   };
-  let cityId = cities[city];
-
+  let city = cities[cityName];
+  let a = 1;
   ApiDB.raw(
-    'INSERT INTO telegram_bot_chats (chat_id,city_id) values (?, ?) ON DUPLICATE KEY UPDATE city_id=?',
-    [chatId, cityId, cityId],
+    'INSERT INTO telegram_bot_chats (chat_id,city_id, gross) values (?, ?, ?) ON DUPLICATE KEY UPDATE city_id=?, gross=?',
+    [chatId, city.id, city.gross, city.id, city.gross],
   ).catch(error => {
     console.log(error);
   });
@@ -132,13 +160,13 @@ const getFieldName = (text: string) => {
   return aliases[text];
 };
 
-const getUserCityId = async (chatId: number) => {
-  const rows = await ApiDB.select('city_id')
+const getUserCity = async (chatId: number) => {
+  const rows = await ApiDB.select('city_id', 'gross')
     .from('telegram_bot_chats')
     .where({ chat_id: chatId });
 
   if (rows.length > 0) {
-    return _.map(rows, 'city_id')[0];
+    return rows[0];
   }
 
   return defaultCityId;
@@ -177,7 +205,8 @@ const saveRequest = (ctx: ContextMessageUpdate, field: string, cityName: string)
  * @param ctx
  */
 const getCourses = async (ctx: ContextMessageUpdate) => {
-  let userCityId = await getUserCityId(ctx.chat.id);
+  const {city_id: userCityId, gross} = await getUserCity(ctx.chat.id);
+
   let field = await getFieldName(ctx.message.text);
   let messageText = ctx.message.text;
 
@@ -193,6 +222,7 @@ const getCourses = async (ctx: ContextMessageUpdate) => {
     city_id: userCityId,
     hidden: 0,
     published: 1,
+    gross: gross ? 1 : 0,
   };
   let order = 'ASC';
   if (field.substr(0, 3) === 'buy') {

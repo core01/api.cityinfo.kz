@@ -94,11 +94,23 @@ router.post('*', (req, res, next) => {
 });
 
 router.get('/:cityid/', function(req: express.Request, res: express.Response) {
-  let where = {
+  const gross: boolean = req.query.gross === "true";
+  let where : {
+    city_id: number;
+    hidden: number;
+    published: number;
+    deleted: number;
+    gross?: number;
+  } = {
     city_id: req.params.cityid,
     hidden: 0,
     published: 1,
+    deleted: 0,
   };
+
+  if(gross){
+   where.gross = 1;
+  }
 
   let sorting: Sorting = {
     buyUSD: 'desc',
@@ -142,6 +154,7 @@ router.get('/:cityid/', function(req: express.Request, res: express.Response) {
     'longitude',
     'latitude',
     'company_id',
+    'gross',
   ];
   CityDB.select(fields)
     .from('new_exchange_rates')
