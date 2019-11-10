@@ -1,5 +1,5 @@
 import app from './app';
-import {server } from './app';
+import { server } from './app';
 import { HttpError } from 'http-errors';
 
 /**
@@ -18,7 +18,7 @@ function onError(error: HttpError) {
     throw error;
   }
 
-  const bind  = 'Port ' + app.get('port');
+  const bind = 'Port ' + app.get('port');
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
@@ -37,9 +37,7 @@ function onError(error: HttpError) {
 
 function onListening() {
   const addr = server.address();
-  let bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
+  let bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
   console.log('Listening on ' + bind);
 }
 

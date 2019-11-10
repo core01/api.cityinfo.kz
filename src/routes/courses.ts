@@ -9,7 +9,7 @@ import { expressRequest } from '../index';
 const checkToken = (
   req: express.Request,
   res: express.Response,
-  next: express.NextFunction
+  next: express.NextFunction,
 ) => {
   const token = req.headers['courses-token'];
   if (token !== process.env.COURSES_TOKEN) {
@@ -94,8 +94,8 @@ router.post('*', (req, res, next) => {
 });
 
 router.get('/:cityid/', function(req: express.Request, res: express.Response) {
-  const gross: boolean = req.query.gross === "true";
-  let where : {
+  const gross: boolean = req.query.gross === 'true';
+  let where: {
     city_id: number;
     hidden: number;
     published: number;
@@ -108,8 +108,8 @@ router.get('/:cityid/', function(req: express.Request, res: express.Response) {
     deleted: 0,
   };
 
-  if(gross){
-   where.gross = 1;
+  if (gross) {
+    where.gross = 1;
   }
 
   let sorting: Sorting = {

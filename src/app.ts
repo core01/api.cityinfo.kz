@@ -19,25 +19,25 @@ dotenv.config();
 
 const app = express();
 // Enable All CORS Requests
-app.use(cors(
-  {
-    origin: process.env.CORS_ORIGIN
-  }
-));
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN,
+  }),
+);
 export const server: Server = createServer(app);
 const io: socketIO.Server = socketIO(server, {
   origins: process.env.SOCKET_CLIENT_ORIGIN,
-  path: '/ws'
+  path: '/ws',
 });
 
 app.set('port', process.env.PORT);
 
-io.on('connection', function (socket) {
-  socket.on('join',(room) => {
-     socket.join(room);
+io.on('connection', function(socket) {
+  socket.on('join', room => {
+    socket.join(room);
   });
 
-  socket.on('disconnect', function () {
+  socket.on('disconnect', function() {
     console.log('disconnect');
   });
 });
@@ -54,9 +54,9 @@ app.use(
 );
 bot.telegram.setWebhook(
   process.env.API_URL +
-  '/telegram/' +
-  process.env.TELEGRAM_BOT_TOKEN +
-  '/webhook',
+    '/telegram/' +
+    process.env.TELEGRAM_BOT_TOKEN +
+    '/webhook',
 );
 
 app.use(
@@ -80,12 +80,12 @@ app.use('/courses', courses);
 app.use('/telegram', telegram);
 
 // catch 404 and forward to error handler
-app.use(function (req, res) {
+app.use(function(req, res) {
   return res.status(404).json(createError(404));
 });
 
 // error handler
-app.use(function (err: any, req: express.Request, res: express.Response) {
+app.use(function(err: any, req: express.Request, res: express.Response) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
@@ -95,5 +95,3 @@ app.use(function (err: any, req: express.Request, res: express.Response) {
 });
 
 export default app;
-
-

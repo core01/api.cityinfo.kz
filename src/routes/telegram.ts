@@ -15,7 +15,10 @@ const flags = {
   GBP: '\u{1F1EC}\u{1F1E7}',
 };
 
-const defaultCityId: number = 4;
+const defaultCity: { [key: string]: number } = {
+  id: 4,
+  gross: 0,
+};
 
 const formatDate = (digit: number) => {
   if (digit < 10) {
@@ -46,8 +49,8 @@ const citySelect = (ctx: ContextMessageUpdate) => {
 
   ctx.reply(
     'Привет, ' +
-    ctx.message.from.first_name +
-    ', для просмотра курса валют в обменных пунктах нужно выбрать город.',
+      ctx.message.from.first_name +
+      ', для просмотра курса валют в обменных пунктах нужно выбрать город.',
     // @ts-ignore
     Markup.keyboard(keyboard)
       .resize()
@@ -55,7 +58,11 @@ const citySelect = (ctx: ContextMessageUpdate) => {
   );
 };
 
-router.post('/:token/webhook', function (req: Request, res: Response, next: NextFunction) {
+router.post('/:token/webhook', function(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   checkToken(req, res, next);
   // @ts-ignore
   bot.handleUpdate(req.body, res.json);
@@ -70,7 +77,8 @@ const attachChatToCity = (cityName: string, chatId: number) => {
     id: number;
     gross: number;
   }
-  let cities: { [key: string]:  chatToCity} = {
+
+  let cities: { [key: string]: chatToCity } = {
     'Нур-Султан': {
       id: 3,
       gross: 0,
@@ -79,7 +87,7 @@ const attachChatToCity = (cityName: string, chatId: number) => {
       id: 3,
       gross: 1,
     },
-    'Алматы': {
+    Алматы: {
       id: 2,
       gross: 0,
     },
@@ -87,16 +95,16 @@ const attachChatToCity = (cityName: string, chatId: number) => {
       id: 2,
       gross: 1,
     },
-    'Павлодар': {
+    Павлодар: {
       id: 1,
       gross: 0,
     },
-    'Риддер': {
+    Риддер: {
       id: 6,
       gross: 0,
     },
     'Усть-Каменогорск': {
-      id:4,
+      id: 4,
       gross: 0,
     },
     'Усть-Каменогорск Опт': {
@@ -169,7 +177,7 @@ const getUserCity = async (chatId: number) => {
     return rows[0];
   }
 
-  return defaultCityId;
+  return defaultCity;
 };
 
 const getCityNameById = async (id: number) => {
@@ -186,7 +194,11 @@ const getCityNameById = async (id: number) => {
  * @param field
  * @param cityName
  */
-const saveRequest = (ctx: ContextMessageUpdate, field: string, cityName: string) => {
+const saveRequest = (
+  ctx: ContextMessageUpdate,
+  field: string,
+  cityName: string,
+) => {
   // сохраняем статистику по запросу
   ApiDB.insert({
     chat_id: ctx.chat.id,
@@ -205,7 +217,7 @@ const saveRequest = (ctx: ContextMessageUpdate, field: string, cityName: string)
  * @param ctx
  */
 const getCourses = async (ctx: ContextMessageUpdate) => {
-  const {city_id: userCityId, gross} = await getUserCity(ctx.chat.id);
+  const { city_id: userCityId, gross } = await getUserCity(ctx.chat.id);
 
   let field = await getFieldName(ctx.message.text);
   let messageText = ctx.message.text;
@@ -216,12 +228,13 @@ const getCourses = async (ctx: ContextMessageUpdate) => {
   }
   let date = new Date();
   date.setHours(0, 0, 0, 0);
-  let unixTime = Math.round((date.valueOf() / 1000));
+  let unixTime = Math.round(date.valueOf() / 1000);
 
   let where = {
     city_id: userCityId,
     hidden: 0,
     published: 1,
+    deleted: 0,
     gross: gross ? 1 : 0,
   };
   let order = 'ASC';
@@ -234,9 +247,8 @@ const getCourses = async (ctx: ContextMessageUpdate) => {
     .andWhere('date_update', '>=', unixTime)
     .andWhere(field, '>=', 1)
     .orderBy(field, order)
-    .limit(12) // If limit is >= 15 than number highlighting not works
+    .limit(15)
     .then(async rates => {
-
       let responseText =
         '<b>Выгодные курсы</b> обмена валют <b>(ВЫГОДНЫЕ СВЕРХУ)</b>:\n\n\r';
       let responseCoursesText = '';
@@ -265,7 +277,10 @@ const getCourses = async (ctx: ContextMessageUpdate) => {
       if (responseCoursesText === '') {
         replyText = 'Нет выгодных курсов по данной валюте.';
       } else {
-        replyText = responseText + responseCoursesText + '<b>(ВЫГОДНЫЕ КУРСЫ СВЕРХУ)</b>\n\r';
+        replyText =
+          responseText +
+          responseCoursesText +
+          '<b>(ВЫГОДНЫЕ КУРСЫ СВЕРХУ)</b>\n\r';
       }
 
       ctx.reply('');
