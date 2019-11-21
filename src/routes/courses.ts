@@ -22,10 +22,6 @@ const checkToken = (
   return next();
 };
 
-interface Rate {
-  [key: string]: number | string;
-}
-
 interface BestCourses {
   [key: string]: number;
 }
@@ -52,13 +48,14 @@ interface exchangeRate {
   day_and_night: number;
   published: number;
   city_id: number;
+  gross: boolean;
 
-  [key: string]: number | string | string[];
+  [key: string]: number | string | string[] | boolean;
 }
 
 // Расчитывает выгодные курсы покупки/продажи
-const getBestCourses = async (rates: Rate[]) => {
-  let arrBest: BestCourses = {
+const getBestCourses = async (rates: exchangeRate[]) => {
+  let arrBestRetail: BestCourses = {
     buyUSD: 1,
     buyEUR: 1,
     buyRUB: 1,
@@ -70,22 +67,27 @@ const getBestCourses = async (rates: Rate[]) => {
     sellCNY: 10000,
     sellGBP: 10000,
   };
+  let arrBestGross = { ...arrBestRetail };
   for (let rate of rates) {
-    for (let key in rate) {
-      let rateValue = parseFloat(rate[key] as string);
+    const best = rate.gross ? arrBestGross : arrBestRetail;
+    for (let key in best) {
+      // let rateValue = rate[key] as string);
       if (key.substr(0, 3) === 'sel') {
-        if (rateValue <= arrBest[key] && rateValue > 0) {
-          arrBest[key] = rateValue;
+        if (rate[key] <= best[key] && rate[key] > 0) {
+          best[key] = rate[key] as number;
         }
       } else if (key.substr(0, 3) === 'buy') {
-        if (rateValue >= arrBest[key] && rateValue > 0) {
-          arrBest[key] = rateValue;
+        if (rate[key] >= best[key] && rate[key] > 0) {
+          best[key] = rate[key] as number;
         }
       }
     }
   }
 
-  return arrBest;
+  return {
+    retail: arrBestRetail,
+    gross: arrBestGross,
+  };
 };
 
 router.post('*', (req, res, next) => {
