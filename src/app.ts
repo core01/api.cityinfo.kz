@@ -19,12 +19,8 @@ dotenv.config();
 
 const app = express();
 // Enable All CORS Requests
-app.use(
-  cors({
-    origin: process.env.CORS_ORIGIN,
-  }),
-);
-export const server: Server = createServer(app);
+app.use(cors());
+const server: Server = createServer(app);
 const io: socketIO.Server = socketIO(server, {
   origins: process.env.SOCKET_CLIENT_ORIGIN,
   path: '/ws',
@@ -94,4 +90,5 @@ app.use(function(err: any, req: express.Request, res: express.Response) {
   res.status(err.status || 500).json(err);
 });
 
+export { server };
 export default app;
