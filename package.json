@@ -9,7 +9,7 @@
     "dev": "nodemon",
     "start": "node .",
     "knex": "node node_modules/knex/bin/cli",
-    "prettier": "prettier --write 'src/**/*.{js,ts,jsx,json}'"
+    "prettier": "prettier --write \"src/**/*.{js,ts,jsx,json}\""
   },
   "keywords": [],
   "author": "",
